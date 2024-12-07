@@ -257,7 +257,7 @@ if __name__ == "__main__":
     plt.scatter(X, y, c='b', label='Input data', alpha=0.5)
     plt.scatter(X, predictions, c='r', label='Predictions', alpha=0.5)
     plt.legend()
-    plt.title(f'{DatasetType.SINE.name} Function Prediction')
+    plt.title(f'{test_dataset.name} Function Prediction')
     plt.show()
 
     # 사용 가능한 데이터셋 확인
