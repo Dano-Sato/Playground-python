@@ -12,6 +12,9 @@ class DatasetType(Enum):
     CIRCLE = auto()
     MOON = auto()
     SINE = auto()
+    SPIRAL = auto()    # 나선형 데이터
+    GAUSSIAN = auto()  # 가우시안 분포 데이터
+    DONUT = auto()     # 도넛 모양 데이터
     
     @classmethod
     def from_string(cls, s: str):
@@ -39,7 +42,10 @@ class DatasetManager:
             DatasetType.NAND: self._create_nand_gate(),
             DatasetType.CIRCLE: self._create_circle_data(),
             DatasetType.MOON: self._create_moon_data(),
-            DatasetType.SINE: self._create_sine_data()
+            DatasetType.SINE: self._create_sine_data(),
+            DatasetType.SPIRAL: self._create_spiral_data(),
+            DatasetType.GAUSSIAN: self._create_gaussian_data(),
+            DatasetType.DONUT: self._create_donut_data()
         }
     
     def _create_and_gate(self):
@@ -83,6 +89,85 @@ class DatasetManager:
         # -1~1 범위를 0~1 범위로 변환
         y = (y + 1) / 2
         return X, y
+    
+    def _create_spiral_data(self, n_samples=1000):
+        """나선형 데이터 생성"""
+        n = n_samples // 2
+        
+        # 첫 번째 나선
+        theta = np.linspace(0, 4*np.pi, n)
+        r = theta + 1
+        x1 = r * np.cos(theta)
+        y1 = r * np.sin(theta)
+        
+        # 두 번째 나선
+        theta = theta + np.pi
+        x2 = r * np.cos(theta)
+        y2 = r * np.sin(theta)
+        
+        # 노이즈 추가
+        noise = 0.2
+        x1 += np.random.randn(n) * noise
+        y1 += np.random.randn(n) * noise
+        x2 += np.random.randn(n) * noise
+        y2 += np.random.randn(n) * noise
+        
+        # 데이터 합치기
+        X = np.vstack([np.column_stack((x1, y1)), np.column_stack((x2, y2))])
+        y = np.hstack([np.zeros(n), np.ones(n)]).reshape(-1, 1)
+        
+        # 데이터 섞기
+        idx = np.random.permutation(len(X))
+        return X[idx], y[idx]
+    
+    def _create_gaussian_data(self, n_samples=1000):
+        """가우시안 분포 데이터 생성"""
+        n = n_samples // 2
+        
+        # 첫 번째 클래스: 3개의 가우시안
+        centers = [(0, 0), (2, 2), (-2, 2)]
+        X1 = np.vstack([np.random.randn(n//3, 2) * 0.5 + center 
+                       for center in centers])
+        y1 = np.zeros(n)
+        
+        # 두 번째 클래스: 2개의 가우시안
+        centers = [(0, 2), (0, -2)]
+        X2 = np.vstack([np.random.randn(n//2, 2) * 0.5 + center 
+                       for center in centers])
+        y2 = np.ones(n)
+        
+        # 데이터 합치기
+        X = np.vstack([X1, X2])
+        y = np.hstack([y1, y2]).reshape(-1, 1)
+        
+        # 데이터 섞기
+        idx = np.random.permutation(len(X))
+        return X[idx], y[idx]
+    
+    def _create_donut_data(self, n_samples=1000):
+        """도넛 모양 데이터 생성"""
+        n = n_samples // 2
+        
+        # 내부 원
+        theta = np.random.uniform(0, 2*np.pi, n)
+        r = np.random.normal(1, 0.1, n)
+        x1 = r * np.cos(theta)
+        y1 = r * np.sin(theta)
+        
+        # 외부 원
+        theta = np.random.uniform(0, 2*np.pi, n)
+        r = np.random.normal(3, 0.1, n)
+        x2 = r * np.cos(theta)
+        y2 = r * np.sin(theta)
+        
+        # 데이터 합치기
+        X = np.vstack([np.column_stack((x1, y1)), np.column_stack((x2, y2))])
+        y = np.hstack([np.zeros(n), np.ones(n)]).reshape(-1, 1)
+        
+        # 데이터 섞기
+        idx = np.random.permutation(len(X))
+        return X[idx], y[idx]
+    
     def get_dataset(self, dataset_type, n_samples=1000):
         """데이터셋 반환"""
         if isinstance(dataset_type, str):
@@ -264,11 +349,11 @@ def plot_decision_boundary(model, X, y, title="Decision Boundary"):
 # 사용 예시
 if __name__ == "__main__":
     dm = DatasetManager()
-    test_dataset = DatasetType.CIRCLE
+    test_dataset = DatasetType.GAUSSIAN
     
     # Enum을 직접 사용
     X, y = dm.get_dataset(test_dataset)    
-    nn = DeepNeuralNetwork([X.shape[1], 4, 4, 1], learning_rate=0.1)
+    nn = DeepNeuralNetwork([X.shape[1], 32,16, 1], learning_rate=0.1)
     nn.train(X, y)
 
    # 결과 시각화
