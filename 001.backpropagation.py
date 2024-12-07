@@ -1,6 +1,7 @@
 from enum import Enum, auto
 import numpy as np
 from sklearn.datasets import make_circles, make_moons
+import matplotlib.pyplot as plt
 
 class DatasetType(Enum):
     """데이터셋 종류를 정의하는 Enum 클래스"""
@@ -74,13 +75,14 @@ class DatasetManager:
         """초승달 형태 데이터"""
         X, y = make_moons(n_samples=n_samples, noise=0.1)
         return X, y.reshape(-1, 1)
-    
+        
     def _create_sine_data(self, n_samples=1000):
-        """사인 함수 데이터"""
+        """사인 함수 데이터 - 출력값을 0~1 범위로 정규화"""
         X = np.linspace(0, 2*np.pi, n_samples).reshape(-1, 1)
         y = np.sin(X)
+        # -1~1 범위를 0~1 범위로 변환
+        y = (y + 1) / 2
         return X, y
-    
     def get_dataset(self, dataset_type, n_samples=1000):
         """데이터셋 반환"""
         if isinstance(dataset_type, str):
@@ -241,17 +243,22 @@ class DeepNeuralNetwork:
 # 사용 예시
 if __name__ == "__main__":
     dm = DatasetManager()
+    test_dataset = DatasetType.SINE
     
     # Enum을 직접 사용
-    X, y = dm.get_dataset(DatasetType.OR)    
-    nn = DeepNeuralNetwork([2, 4, 4, 1], learning_rate=0.1)
+    X, y = dm.get_dataset(test_dataset)    
+    nn = DeepNeuralNetwork([1, 4, 4, 1], learning_rate=0.1)
     nn.train(X, y)
 
-    # 예측 결과 출력
+   # 결과 시각화
     predictions = nn.predict(X)
-    for input_val, pred in zip(X, predictions):
-        print(f"입력: {input_val}, 예측값: {pred[0]:.4f}")
     
+    plt.figure(figsize=(10, 6))
+    plt.scatter(X, y, c='b', label='Input data', alpha=0.5)
+    plt.scatter(X, predictions, c='r', label='Predictions', alpha=0.5)
+    plt.legend()
+    plt.title(f'{DatasetType.SINE.name} Function Prediction')
+    plt.show()
 
     # 사용 가능한 데이터셋 확인
     print("사용 가능한 데이터셋:", dm.list_datasets())
