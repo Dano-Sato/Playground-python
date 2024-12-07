@@ -240,25 +240,51 @@ class DeepNeuralNetwork:
         """예측"""
         return self.forward_propagation(X)
 
+def plot_decision_boundary(model, X, y, title="Decision Boundary"):
+    """결정 경계 시각화 함수"""
+    # 그리드 생성
+    x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
+    y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100),
+                        np.linspace(y_min, y_max, 100))
+    
+    # 그리드 포인트에 대한 예측
+    Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+    
+    # 결정 경계 시각화
+    plt.figure(figsize=(10, 8))
+    plt.contourf(xx, yy, Z, alpha=0.4)
+    plt.scatter(X[:, 0], X[:, 1], c=y, alpha=0.8)
+    plt.title(title)
+    plt.xlabel("Feature 1")
+    plt.ylabel("Feature 2")
+    plt.colorbar(label='Prediction Probability')
+    plt.show()
 # 사용 예시
 if __name__ == "__main__":
     dm = DatasetManager()
-    test_dataset = DatasetType.SINE
+    test_dataset = DatasetType.CIRCLE
     
     # Enum을 직접 사용
     X, y = dm.get_dataset(test_dataset)    
-    nn = DeepNeuralNetwork([1, 4, 4, 1], learning_rate=0.1)
+    nn = DeepNeuralNetwork([X.shape[1], 4, 4, 1], learning_rate=0.1)
     nn.train(X, y)
 
    # 결과 시각화
     predictions = nn.predict(X)
-    
-    plt.figure(figsize=(10, 6))
-    plt.scatter(X, y, c='b', label='Input data', alpha=0.5)
-    plt.scatter(X, predictions, c='r', label='Predictions', alpha=0.5)
-    plt.legend()
-    plt.title(f'{test_dataset.name} Function Prediction')
-    plt.show()
+
+    if X.shape[1] == 1:  # 1차원 입력인 경우        
+        plt.figure(figsize=(10, 6))
+        plt.scatter(X, y, c='b', label='Input data', alpha=0.5)
+        plt.scatter(X, predictions, c='r', label='Predictions', alpha=0.5)
+        plt.legend()
+        plt.title(f'{test_dataset.name} Function Prediction')
+        plt.show()
+    elif X.shape[1] == 2:  # 2차원 입력인 경우
+        # 결정 경계 시각화
+        plot_decision_boundary(nn, X, y, 
+                             title=f'{test_dataset.name} - Decision Boundary')
 
     # 사용 가능한 데이터셋 확인
     print("사용 가능한 데이터셋:", dm.list_datasets())
