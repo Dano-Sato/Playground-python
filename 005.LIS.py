@@ -57,6 +57,104 @@ def longest_increasing_subsequence(arr):
     # 역순으로 만들어진 수열을 다시 뒤집어서 반환
     return lis[::-1]
 
+def count_lis(arr):
+    if not arr:
+        return 0, []
+    
+    n = len(arr)
+    dp = []  # 길이별 최소값
+    count = [1] * n  # 각 위치에서 끝나는 LIS의 개수
+    last_indices = []
+    
+    for i, num in enumerate(arr):
+        idx = bisect_left(dp, num)
+        
+        if idx == len(dp):
+            dp.append(num)
+        else:
+            dp[idx] = num
+            
+        if idx > 0:
+            # i번째 숫자로 끝나는 LIS의 개수 계산
+            for j in range(i):
+                if arr[j] < num and pos[j] == idx - 1:
+                    count[i] += count[j]
+                    
+    # 최대 길이를 가진 모든 LIS의 개수 합산
+    max_len = len(dp)
+    total_count = sum(count[i] for i in range(n) if pos[i] == max_len - 1)
+    
+    return total_count, dp
+
+def minimum_changes_to_lis(arr):
+    n = len(arr)
+    # 원하는 길이의 LIS를 만들기 위해 필요한 최소 변경 횟수
+    dp = [[float('inf')] * (n + 1) for _ in range(n)]
+    
+    # 초기화: 길이 1인 수열은 변경 불필요
+    for i in range(n):
+        dp[i][1] = 0
+    
+    for length in range(2, n + 1):
+        for i in range(length - 1, n):
+            # i번째 숫자를 변경하지 않는 경우
+            if i >= length - 1:
+                for j in range(i):
+                    if arr[i] > arr[j]:
+                        dp[i][length] = min(dp[i][length], dp[j][length - 1])
+            
+            # i번째 숫자를 변경하는 경우
+            for j in range(i):
+                # j번째 숫자보다 큰 최소값으로 변경
+                change_cost = 1
+                dp[i][length] = min(dp[i][length], dp[j][length - 1] + change_cost)
+    
+    return min(dp[i][n] for i in range(n))
+
+def box_stacking(boxes):
+    """
+    boxes: List of (width, height, depth) tuples
+    returns: 최대로 쌓을 수 있는 상자의 높이
+    """
+    # 모든 가능한 회전 방향 생성
+    rotations = []
+    for w, h, d in boxes:
+        # (base_width, base_depth, height)
+        rotations.extend([
+            (w, d, h),
+            (h, w, d),
+            (h, d, w),
+            (d, w, h),
+            (d, h, w),
+            (w, h, d)
+        ])
+    
+    # 너비와 깊이를 기준으로 정렬
+    rotations.sort(key=lambda x: x[0] * x[1], reverse=True)
+    
+    n = len(rotations)
+    heights = [box[2] for box in rotations]  # 각 상자의 높이
+    dp = heights[:]  # 각 상자까지의 최대 높이
+    prev = [-1] * n  # 이전 상자 추적
+    
+    for i in range(1, n):
+        for j in range(i):
+            if (rotations[i][0] < rotations[j][0] and 
+                rotations[i][1] < rotations[j][1]):
+                current = heights[i] + dp[j]
+                if current > dp[i]:
+                    dp[i] = current
+                    prev[i] = j
+    
+    # 최대 높이와 사용된 상자들 추적
+    max_height = max(dp)
+    stack = []
+    curr = dp.index(max_height)
+    while curr != -1:
+        stack.append(rotations[curr])
+        curr = prev[curr]
+    
+    return max_height, stack[::-1]
 # 테스트
 sequences = [
     [3, 10, 2, 1, 20, 30, 40, 10, 50, 25],
